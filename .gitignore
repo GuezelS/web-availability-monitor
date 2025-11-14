@@ -205,3 +205,17 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Monitoring Tool Database
+*.db
+*.sqlite
+*.sqlite3
+data/*.db
+data/*.sqlite
+
+# Monitoring Tool Database
+*.db
+*.sqlite
+*.sqlite3
+data/*.db
+data/*.sqlite
