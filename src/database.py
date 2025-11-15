@@ -120,3 +120,125 @@ def save_check(check_result):
         if conn:
             close_connection(conn)
         return None        
+    
+def get_all_checks():
+    """
+    Get all check results from database.
+    
+    Returns:
+        list: List of check result dictionaries
+    """
+    try:
+        conn = get_connection()
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT * FROM checks
+            ORDER BY timestamp DESC
+        ''')
+        
+        rows = cursor.fetchall()
+        close_connection(conn)
+        
+        # Convert rows to dictionaries
+        checks = [dict(row) for row in rows]
+        return checks
+        
+    except Exception as e:
+        print(f"❌ Error getting checks: {e}")
+        if conn:
+            close_connection(conn)
+        return []
+
+
+def get_recent_checks(limit=10):
+    """
+    Get most recent check results.
+    
+    Args:
+        limit (int): Number of results to return (default 10)
+        
+    Returns:
+        list: List of recent check result dictionaries
+    """
+    try:
+        conn = get_connection()
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT * FROM checks
+            ORDER BY timestamp DESC
+            LIMIT ?
+        ''', (limit,))
+        
+        rows = cursor.fetchall()
+        close_connection(conn)
+        
+        checks = [dict(row) for row in rows]
+        return checks
+        
+    except Exception as e:
+        print(f"❌ Error getting recent checks: {e}")
+        if conn:
+            close_connection(conn)
+        return []
+
+
+def get_checks_by_url(url):
+    """
+    Get all checks for a specific URL.
+    
+    Args:
+        url (str): URL to filter by
+        
+    Returns:
+        list: List of check results for the URL
+    """
+    try:
+        conn = get_connection()
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT * FROM checks
+            WHERE url = ?
+            ORDER BY timestamp DESC
+        ''', (url,))
+        
+        rows = cursor.fetchall()
+        close_connection(conn)
+        
+        checks = [dict(row) for row in rows]
+        return checks
+        
+    except Exception as e:
+        print(f"❌ Error getting checks for {url}: {e}")
+        if conn:
+            close_connection(conn)
+        return []
+
+
+def get_check_count():
+    """
+    Get total number of checks in database.
+    
+    Returns:
+        int: Total check count
+    """
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT COUNT(*) FROM checks')
+        count = cursor.fetchone()[0]
+        
+        close_connection(conn)
+        return count
+        
+    except Exception as e:
+        print(f"❌ Error counting checks: {e}")
+        if conn:
+            close_connection(conn)
+        return 0
