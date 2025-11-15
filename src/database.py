@@ -67,3 +67,56 @@ def close_connection(conn):
     """
     if conn:
         conn.close()
+
+
+def save_check(check_result):
+    """
+    Save a check result to the database.
+    
+    Args:
+        check_result (dict): Check result from check_website()
+            Expected keys: url, timestamp, status_code, response_time,
+                          success, error, retries
+    
+    Returns:
+        int: ID of inserted row, or None if failed
+    """
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        
+        # Convert timestamp to string if datetime object
+        timestamp = check_result['timestamp']
+        if isinstance(timestamp, datetime):
+            timestamp = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+        
+        # Convert success boolean to integer (SQLite stores as 0/1)
+        success = 1 if check_result['success'] else 0
+        
+        # Insert check result
+        cursor.execute('''
+            INSERT INTO checks (
+                url, timestamp, status_code, response_time,
+                success, error, retries
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            check_result['url'],
+            timestamp,
+            check_result.get('status_code'),
+            check_result.get('response_time'),
+            success,
+            check_result.get('error'),
+            check_result.get('retries', 0)
+        ))
+        
+        conn.commit()
+        row_id = cursor.lastrowid
+        close_connection(conn)
+        
+        return row_id
+        
+    except Exception as e:
+        print(f"❌ Error saving to database: {e}")
+        if conn:
+            close_connection(conn)
+        return None        
