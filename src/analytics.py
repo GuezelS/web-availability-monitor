@@ -269,3 +269,136 @@ def get_outage_summary(hours=24, url=None):
         'longest_outage_minutes': longest_outage,
         'outages': outages
     }
+
+def get_performance_stats(hours=None, days=None, url=None):
+    """
+    Get performance statistics for response times.
+    
+    Args:
+        hours (int): Last N hours (optional)
+        days (int): Last N days (optional)
+        url (str): Filter by URL (optional)
+        
+    Returns:
+        dict: Performance statistics
+    """
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        
+        # Build query
+        query = """
+            SELECT 
+                COUNT(*) as total_checks,
+                SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) as successful_checks,
+                SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) as failed_checks,
+                AVG(response_time) as avg_response_time,
+                MIN(response_time) as min_response_time,
+                MAX(response_time) as max_response_time
+            FROM checks
+            WHERE response_time IS NOT NULL
+        """
+        params = []
+        
+        # Add time filter
+        if hours:
+            cutoff = datetime.now() - timedelta(hours=hours)
+            cutoff_str = cutoff.strftime('%Y-%m-%d %H:%M:%S')
+            query += " AND timestamp >= ?"
+            params.append(cutoff_str)
+        elif days:
+            cutoff = datetime.now() - timedelta(days=days)
+            cutoff_str = cutoff.strftime('%Y-%m-%d %H:%M:%S')
+            query += " AND timestamp >= ?"
+            params.append(cutoff_str)
+        
+        # Add URL filter
+        if url:
+            query += " AND url = ?"
+            params.append(url)
+        
+        cursor.execute(query, params)
+        result = cursor.fetchone()
+        
+        # Get median (requires separate query)
+        median_query = """
+            SELECT response_time FROM checks 
+            WHERE response_time IS NOT NULL
+        """
+        median_params = []
+        
+        if hours:
+            cutoff = datetime.now() - timedelta(hours=hours)
+            cutoff_str = cutoff.strftime('%Y-%m-%d %H:%M:%S')
+            median_query += " AND timestamp >= ?"
+            median_params.append(cutoff_str)
+        elif days:
+            cutoff = datetime.now() - timedelta(days=days)
+            cutoff_str = cutoff.strftime('%Y-%m-%d %H:%M:%S')
+            median_query += " AND timestamp >= ?"
+            median_params.append(cutoff_str)
+        
+        if url:
+            median_query += " AND url = ?"
+            median_params.append(url)
+        
+        median_query += " ORDER BY response_time"
+        
+        cursor.execute(median_query, median_params)
+        response_times = [row[0] for row in cursor.fetchall()]
+        
+        close_connection(conn)
+        
+        # Calculate median
+        median = 0.0
+        if response_times:
+            n = len(response_times)
+            if n % 2 == 0:
+                median = (response_times[n//2 - 1] + response_times[n//2]) / 2
+            else:
+                median = response_times[n//2]
+        
+        return {
+            'total_checks': result[0] or 0,
+            'successful_checks': result[1] or 0,
+            'failed_checks': result[2] or 0,
+            'avg_response_time': round(result[3], 3) if result[3] else 0.0,
+            'min_response_time': round(result[4], 3) if result[4] else 0.0,
+            'max_response_time': round(result[5], 3) if result[5] else 0.0,
+            'median_response_time': round(median, 3)
+        }
+        
+    except Exception as e:
+        print(f"❌ Error getting performance stats: {e}")
+        if conn:
+            close_connection(conn)
+        return {
+            'total_checks': 0,
+            'successful_checks': 0,
+            'failed_checks': 0,
+            'avg_response_time': 0.0,
+            'min_response_time': 0.0,
+            'max_response_time': 0.0,
+            'median_response_time': 0.0
+        }
+
+
+def get_complete_report(hours=24, url=None):
+    """
+    Get comprehensive monitoring report.
+    Combines uptime, outages, and performance stats.
+    
+    Args:
+        hours (int): Time period in hours
+        url (str): Filter by URL (optional)
+        
+    Returns:
+        dict: Complete monitoring report
+    """
+    return {
+        'uptime': get_uptime_summary(url=url),
+        'outages': get_outage_summary(hours=hours, url=url),
+        'performance': get_performance_stats(hours=hours, url=url),
+        'report_period_hours': hours,
+        'report_generated': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    }
