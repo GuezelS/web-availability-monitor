@@ -119,7 +119,8 @@ def save_check(check_result):
         print(f"❌ Error saving to database: {e}")
         if conn:
             close_connection(conn)
-        return None        
+        return None      
+      
     
 def get_all_checks():
     """
@@ -239,6 +240,46 @@ def get_check_count():
         
     except Exception as e:
         print(f"❌ Error counting checks: {e}")
+        if conn:
+            close_connection(conn)
+        return 0
+    
+    
+def cleanup_old_checks(days=30):
+    """
+    Delete check results older than specified days.
+    
+    Args:
+        days (int): Keep checks from last N days (default 30)
+        
+    Returns:
+        int: Number of rows deleted
+    """
+    try:
+        from datetime import timedelta
+        
+        conn = get_connection()
+        cursor = conn.cursor()
+        
+        # Calculate cutoff date
+        cutoff_date = datetime.now() - timedelta(days=days)
+        cutoff_str = cutoff_date.strftime('%Y-%m-%d %H:%M:%S')
+        
+        # Delete old checks
+        cursor.execute('''
+            DELETE FROM checks
+            WHERE timestamp < ?
+        ''', (cutoff_str,))
+        
+        deleted_count = cursor.rowcount
+        conn.commit()
+        close_connection(conn)
+        
+        print(f"🗑️  Deleted {deleted_count} checks older than {days} days")
+        return deleted_count
+        
+    except Exception as e:
+        print(f"❌ Error cleaning up old checks: {e}")
         if conn:
             close_connection(conn)
         return 0
