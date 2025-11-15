@@ -6,8 +6,12 @@ Checks if websites are up or down.
 import requests
 from datetime import datetime
 import time
+from src.logger import setup_logger
 
-def check_website(url, timeout=5,max_retries=3):
+# Initialize logger
+logger = setup_logger()
+
+def check_website(url, timeout=5, max_retries=3):
     """
     Check if a website is available.
     
@@ -28,6 +32,8 @@ def check_website(url, timeout=5,max_retries=3):
     """
     last_error = None
 
+    logger.info(f"Checking {url}...")
+
     # Try multiple times
     for attempt in range(max_retries):
         try:
@@ -43,6 +49,9 @@ def check_website(url, timeout=5,max_retries=3):
             # Calculate duration
             response_time = (end_time - start_time).total_seconds()
             
+            # Log success
+            logger.info(f"✅ {url} is UP - {response.status_code} ({response_time:.3f}s)")
+
             # Return success result
             return {
                 'url': url,
@@ -56,17 +65,19 @@ def check_website(url, timeout=5,max_retries=3):
         
         except requests.Timeout:
             last_error = f'Timeout - Website took longer than {timeout} seconds'
-            
+            logger.warning(f"⏱️  Attempt {attempt + 1} timed out")
         except requests.ConnectionError:
             last_error = 'Connection failed - Cannot reach website'
-            
+            logger.warning(f"🌐 Attempt {attempt + 1} connection failed")
         except Exception as e:
             last_error = f'Unexpected error: {str(e)}'
-
+            logger.warning(f"⚠️  Attempt {attempt + 1} error: {e}")
         # If not last attempt, wait before retry
         if attempt < max_retries - 1:
             time.sleep(1)  # Wait 1 second before retry
 
+    logger.error(f"❌ {url} is DOWN - {last_error}")
+    
     # All retries failed - return failure
     return {
         'url': url,
