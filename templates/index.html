@@ -226,14 +226,18 @@
                 >
                 <button 
                     type="submit"
+                    onclick="this.innerHTML='⏳ Checking...'; this.disabled=true;"
                     style="padding: 15px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 1em; transition: transform 0.2s;"
-                    onmouseover="this.style.transform='scale(1.05)'"
+                    onmouseover="if(!this.disabled) this.style.transform='scale(1.05)'"
                     onmouseout="this.style.transform='scale(1)'"
                 >
                     Check Now 
                 </button>
             </form>
             
+             <p style="margin-top: 10px; color: #6b7280; font-size: 0.85em;">
+                💡 Tip: Dashboard auto-refreshes every 30 seconds to show latest data
+            </p>
             {% if check_result %}
             <div style="margin-top: 20px; padding: 20px; background: {% if check_result.success %}#d1fae5{% else %}#fee2e2{% endif %}; border-radius: 10px; border-left: 4px solid {% if check_result.success %}#10b981{% else %}#ef4444{% endif %};">
                 <h3 style="margin-bottom: 10px; color: {% if check_result.success %}#065f46{% else %}#991b1b{% endif %};">
@@ -346,11 +350,11 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Timestamp</th>
-                        <th>URL</th>
-                        <th>Status</th>
-                        <th>Response Time</th>
-                        <th>Status Code</th>
+                        <th> Timestamp</th>
+                        <th> URL</th>
+                        <th> Status</th>
+                        <th> Response Time</th>
+                        <th> Status Code</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -371,15 +375,6 @@
                     {% endfor %}
                 </tbody>
             </table>
-        </div>
-        
-        <!-- Footer -->
-        <div class="footer">
-            <p>Report generated: {{ report.report_generated }}</p>
-            <p>Monitoring Period: {{ report.report_period_hours }} hours</p>
-            <p style="margin-top: 20px; font-size: 0.95em; opacity: 0.9;">
-                Made with 💜 by <strong>Sevdenur Güzel @ SAP</strong>
-            </p>
         </div>
 
         <!-- Footer -->
