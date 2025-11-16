@@ -2,7 +2,7 @@
 Flask web application for monitoring dashboard.
 """
 
-from flask import Flask, render_template, jsonify, request, redirect, url_for
+from flask import Flask, render_template, jsonify, request, redirect, url_for, session
 from src.analytics import (
     get_complete_report,
     get_uptime_summary,
@@ -14,7 +14,7 @@ import os
 
 # Create Flask app
 app = Flask(__name__)
-
+app.secret_key = 'web-monitoring-secret-key-change-in-production'
 
 @app.route('/')
 def dashboard():
@@ -28,11 +28,19 @@ def dashboard():
         # Get recent checks for table
         recent_checks = get_recent_checks(limit=10)
         
+        # Get flash messages from session
+        check_result = session.pop('check_result', None)
+        success_message = session.pop('success_message', None)
+        error = session.pop('error', None)
+        
         # Render dashboard template
         return render_template(
             'index.html',
             report=report,
-            recent_checks=recent_checks
+            recent_checks=recent_checks,
+            check_result=check_result,
+            success_message=success_message,
+            error=error
         )
     except Exception as e:
         return f"Error loading dashboard: {e}", 500
@@ -97,6 +105,7 @@ def health():
 def instant_check():
     """
     Instant URL check - user submits URL and gets immediate result.
+    Uses POST-Redirect-GET pattern to prevent form resubmission.
     """
     try:
         from src.monitor import check_website
@@ -107,10 +116,8 @@ def instant_check():
         
         # Validate URL
         if not url:
-            return render_template('index.html', 
-                error="Please enter a URL",
-                report=get_complete_report(hours=24),
-                recent_checks=get_recent_checks(limit=10))
+            session['error'] = "Please enter a URL"
+            return redirect(url_for('dashboard'))
         
         # Add https:// if not present
         if not url.startswith('http://') and not url.startswith('https://'):
@@ -122,22 +129,16 @@ def instant_check():
         # Save to database
         save_check(result)
         
-        # Get updated data
-        report = get_complete_report(hours=24)
-        recent_checks = get_recent_checks(limit=10)
+        # Store result in session for display after redirect
+        session['check_result'] = result
+        session['success_message'] = f"Checked {url} successfully!"
         
-        # Render with success message
-        return render_template('index.html',
-            report=report,
-            recent_checks=recent_checks,
-            check_result=result,
-            success_message=f"Checked {url} successfully!")
+        # Redirect to dashboard (PRG pattern)
+        return redirect(url_for('dashboard'))
             
     except Exception as e:
-        return render_template('index.html',
-            error=f"Error checking URL: {str(e)}",
-            report=get_complete_report(hours=24),
-            recent_checks=get_recent_checks(limit=10))
+        session['error'] = f"Error checking URL: {str(e)}"
+        return redirect(url_for('dashboard'))
 
 
 if __name__ == '__main__':
