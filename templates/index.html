@@ -192,6 +192,25 @@
             <p class="subtitle">Real-time Monitoring Dashboard</p>
         </div>
         
+        <!-- Live Status Indicator -->
+        <div class="section" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; margin-bottom: 30px; text-align: center;">
+            <div style="display: flex; justify-content: space-around; align-items: center; padding: 10px;">
+                <div>
+                    <div style="font-size: 0.9em; opacity: 0.9;">Monitoring Status</div>
+                    <div style="font-size: 1.5em; font-weight: bold;">🟢 ACTIVE</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.9em; opacity: 0.9;">Auto-refresh in</div>
+                    <div style="font-size: 1.5em; font-weight: bold;"><span id="refresh-timer">30</span>s</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.9em; opacity: 0.9;">Last Update</div>
+                    <div style="font-size: 1.5em; font-weight: bold;">Just now</div>
+                </div>
+            </div>
+        </div>
+
+        
         <!-- Instant URL Check -->
         <div class="section" style="margin-bottom: 30px;">
             <h2>🔍 Check Any Website</h2>
@@ -362,5 +381,32 @@
                 Made with 💜 by <strong>Sevdenur Güzel @ SAP</strong>
             </p>
         </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>Report generated: {{ report.report_generated }}</p>
+            <p>Monitoring Period: {{ report.report_period_hours }} hours</p>
+            <p style="margin-top: 20px; font-size: 0.95em; opacity: 0.9;">
+                Made with 💜 by <strong>Sevdenur Güzel @ SAP</strong>
+            </p>
+        </div>
+    </div>
+    
+    <!-- Auto-refresh JavaScript -->
+    <script>
+        // Auto-refresh dashboard every 30 seconds
+        setTimeout(function() {
+            location.reload();
+        }, 30000);  // 30000ms = 30 seconds
+        
+        // Optional: Show countdown timer
+        let countdown = 30;
+        setInterval(function() {
+            countdown--;
+            if (countdown <= 0) countdown = 30;
+            const timer = document.getElementById('refresh-timer');
+            if (timer) timer.textContent = countdown;
+        }, 1000);
+    </script>
 </body>
 </html>
