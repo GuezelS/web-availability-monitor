@@ -2,7 +2,7 @@
 Flask web application for monitoring dashboard.
 """
 
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request, redirect, url_for
 from src.analytics import (
     get_complete_report,
     get_uptime_summary,
@@ -91,6 +91,53 @@ def health():
             'status': 'unhealthy',
             'error': str(e)
         }), 500
+
+
+@app.route('/check', methods=['POST'])
+def instant_check():
+    """
+    Instant URL check - user submits URL and gets immediate result.
+    """
+    try:
+        from src.monitor import check_website
+        from src.database import save_check
+        
+        # Get URL from form
+        url = request.form.get('url', '').strip()
+        
+        # Validate URL
+        if not url:
+            return render_template('index.html', 
+                error="Please enter a URL",
+                report=get_complete_report(hours=24),
+                recent_checks=get_recent_checks(limit=10))
+        
+        # Add https:// if not present
+        if not url.startswith('http://') and not url.startswith('https://'):
+            url = 'https://' + url
+        
+        # Check the website
+        result = check_website(url, timeout=5)
+        
+        # Save to database
+        save_check(result)
+        
+        # Get updated data
+        report = get_complete_report(hours=24)
+        recent_checks = get_recent_checks(limit=10)
+        
+        # Render with success message
+        return render_template('index.html',
+            report=report,
+            recent_checks=recent_checks,
+            check_result=result,
+            success_message=f"Checked {url} successfully!")
+            
+    except Exception as e:
+        return render_template('index.html',
+            error=f"Error checking URL: {str(e)}",
+            report=get_complete_report(hours=24),
+            recent_checks=get_recent_checks(limit=10))
 
 
 if __name__ == '__main__':

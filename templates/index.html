@@ -192,6 +192,62 @@
             <p class="subtitle">Real-time Monitoring Dashboard</p>
         </div>
         
+        <!-- Instant URL Check -->
+        <div class="section" style="margin-bottom: 30px;">
+            <h2>🔍 Check Any Website</h2>
+            <p style="color: #666; margin-bottom: 20px;">Enter any URL to check its availability right now</p>
+            
+            <form action="/check" method="post" style="display: flex; gap: 10px; max-width: 600px;">
+                <input 
+                    type="text" 
+                    name="url" 
+                    placeholder="youtube.com or https://github.com" 
+                    required
+                    style="flex: 1; padding: 15px; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 1em;"
+                >
+                <button 
+                    type="submit"
+                    style="padding: 15px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 1em; transition: transform 0.2s;"
+                    onmouseover="this.style.transform='scale(1.05)'"
+                    onmouseout="this.style.transform='scale(1)'"
+                >
+                    Check Now 
+                </button>
+            </form>
+            
+            {% if check_result %}
+            <div style="margin-top: 20px; padding: 20px; background: {% if check_result.success %}#d1fae5{% else %}#fee2e2{% endif %}; border-radius: 10px; border-left: 4px solid {% if check_result.success %}#10b981{% else %}#ef4444{% endif %};">
+                <h3 style="margin-bottom: 10px; color: {% if check_result.success %}#065f46{% else %}#991b1b{% endif %};">
+                    {% if check_result.success %}✅ Website is UP!{% else %}❌ Website is DOWN!{% endif %}
+                </h3>
+                <p style="color: #374151; margin: 5px 0;"><strong>URL:</strong> {{ check_result.url }}</p>
+                {% if check_result.status_code %}
+                <p style="color: #374151; margin: 5px 0;"><strong>Status Code:</strong> {{ check_result.status_code }}</p>
+                {% endif %}
+                {% if check_result.response_time %}
+                <p style="color: #374151; margin: 5px 0;"><strong>Response Time:</strong> {{ "%.3f"|format(check_result.response_time) }}s</p>
+                {% endif %}
+                {% if check_result.error %}
+                <p style="color: #991b1b; margin: 5px 0;"><strong>Error:</strong> {{ check_result.error }}</p>
+                {% endif %}
+                <p style="color: #6b7280; margin: 5px 0; font-size: 0.9em;"><strong>Checked:</strong> {{ check_result.timestamp }}</p>
+            </div>
+            {% endif %}
+            
+            {% if error %}
+            <div style="margin-top: 20px; padding: 15px; background: #fee2e2; border-radius: 10px; border-left: 4px solid #ef4444; color: #991b1b;">
+                ⚠️ {{ error }}
+            </div>
+            {% endif %}
+            
+            {% if success_message %}
+            <div style="margin-top: 20px; padding: 15px; background: #d1fae5; border-radius: 10px; border-left: 4px solid #10b981; color: #065f46;">
+                ✅ {{ success_message }}
+            </div>
+            {% endif %}
+        </div>
+
+
         <!-- Main Stats Grid -->
         <div class="stats-grid">
             <div class="stat-card">
