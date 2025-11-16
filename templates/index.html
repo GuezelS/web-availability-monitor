@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Website Monitor Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <h1>🌐 Website Availability Monitor</h1>
+    
+    <h2>Uptime Statistics</h2>
+    <ul>
+        <li>Overall: {{ report.uptime.overall }}%</li>
+        <li>Last 24h: {{ report.uptime.last_24h }}%</li>
+        <li>Last 7d: {{ report.uptime.last_7d }}%</li>
+        <li>Last 30d: {{ report.uptime.last_30d }}%</li>
+    </ul>
+    
+    <h2>Performance</h2>
+    <ul>
+        <li>Total Checks: {{ report.performance.total_checks }}</li>
+        <li>Successful: {{ report.performance.successful_checks }}</li>
+        <li>Failed: {{ report.performance.failed_checks }}</li>
+        <li>Avg Response: {{ report.performance.avg_response_time }}s</li>
+    </ul>
+    
+    <h2>Recent Checks</h2>
+    <table border="1">
+        <tr>
+            <th>Timestamp</th>
+            <th>URL</th>
+            <th>Status</th>
+            <th>Response Time</th>
+        </tr>
+        {% for check in recent_checks %}
+        <tr>
+            <td>{{ check.timestamp }}</td>
+            <td>{{ check.url }}</td>
+            <td>{% if check.success %}✅ UP{% else %}❌ DOWN{% endif %}</td>
+            <td>{{ check.response_time }}s</td>
+        </tr>
+        {% endfor %}
+    </table>
+    
+    <p><small>Report generated: {{ report.report_generated }}</small></p>
+</body>
+</html>
