@@ -273,6 +273,7 @@ def get_outage_summary(hours=24, url=None):
 def get_performance_stats(hours=None, days=None, url=None):
     """
     Get performance statistics for response times.
+    Separates count queries from response time statistics to handle failed checks properly.
     
     Args:
         hours (int): Last N hours (optional)
@@ -280,72 +281,96 @@ def get_performance_stats(hours=None, days=None, url=None):
         url (str): Filter by URL (optional)
         
     Returns:
-        dict: Performance statistics
+        dict: Performance statistics including:
+            - total_checks (int): Total number of checks (successful + failed)
+            - successful_checks (int): Number of successful checks
+            - failed_checks (int): Number of failed checks
+            - avg_response_time (float): Average response time in seconds (from successful checks only)
+            - min_response_time (float): Minimum response time in seconds (from successful checks only)
+            - max_response_time (float): Maximum response time in seconds (from successful checks only)
+            - median_response_time (float): Median response time in seconds (from successful checks only)
+            
+    Note:
+        Response time statistics (avg, min, max, median) are calculated only from successful checks
+        where response_time is not NULL. Failed checks are counted in failed_checks but do not
+        contribute to response time calculations.
     """
     try:
         conn = get_connection()
         cursor = conn.cursor()
         
-        # Build query
-        query = """
+        # Build time and URL filters
+        time_filter = ""
+        params = []
+        
+        if hours:
+            cutoff = datetime.now() - timedelta(hours=hours)
+            cutoff_str = cutoff.strftime('%Y-%m-%d %H:%M:%S')
+            time_filter = " AND timestamp >= ?"
+            params.append(cutoff_str)
+        elif days:
+            cutoff = datetime.now() - timedelta(days=days)
+            cutoff_str = cutoff.strftime('%Y-%m-%d %H:%M:%S')
+            time_filter = " AND timestamp >= ?"
+            params.append(cutoff_str)
+        
+        url_filter = ""
+        if url:
+            url_filter = " AND url = ?"
+            params.append(url)
+        
+        # Query 1: Get total, successful, and failed counts (ALL checks)
+        count_query = f"""
             SELECT 
                 COUNT(*) as total_checks,
                 SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) as successful_checks,
-                SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) as failed_checks,
+                SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) as failed_checks
+            FROM checks
+            WHERE 1=1{time_filter}{url_filter}
+        """
+        cursor.execute(count_query, params)
+        count_result = cursor.fetchone()
+        
+        # Handle None result from count query
+        if not count_result:
+            total_checks = 0
+            successful_checks = 0
+            failed_checks = 0
+        else:
+            total_checks = count_result[0] or 0
+            successful_checks = count_result[1] or 0
+            failed_checks = count_result[2] or 0
+        
+        # Query 2: Get response time stats (ONLY successful checks)
+        stats_query = f"""
+            SELECT 
                 AVG(response_time) as avg_response_time,
                 MIN(response_time) as min_response_time,
                 MAX(response_time) as max_response_time
             FROM checks
-            WHERE response_time IS NOT NULL
+            WHERE success = 1 AND response_time IS NOT NULL{time_filter}{url_filter}
         """
-        params = []
+        cursor.execute(stats_query, params)
+        stats_result = cursor.fetchone()
         
-        # Add time filter
-        if hours:
-            cutoff = datetime.now() - timedelta(hours=hours)
-            cutoff_str = cutoff.strftime('%Y-%m-%d %H:%M:%S')
-            query += " AND timestamp >= ?"
-            params.append(cutoff_str)
-        elif days:
-            cutoff = datetime.now() - timedelta(days=days)
-            cutoff_str = cutoff.strftime('%Y-%m-%d %H:%M:%S')
-            query += " AND timestamp >= ?"
-            params.append(cutoff_str)
+        # Handle None result from stats query
+        if not stats_result:
+            avg = 0.0
+            min_time = 0.0
+            max_time = 0.0
+        else:
+            avg = stats_result[0] if stats_result[0] is not None else 0.0
+            min_time = stats_result[1] if stats_result[1] is not None else 0.0
+            max_time = stats_result[2] if stats_result[2] is not None else 0.0
         
-        # Add URL filter
-        if url:
-            query += " AND url = ?"
-            params.append(url)
-        
-        cursor.execute(query, params)
-        result = cursor.fetchone()
-        
-        # Get median (requires separate query)
-        median_query = """
+        # Query 3: Get median (ONLY successful checks)
+        median_query = f"""
             SELECT response_time FROM checks 
-            WHERE response_time IS NOT NULL
+            WHERE success = 1 AND response_time IS NOT NULL{time_filter}{url_filter}
+            ORDER BY response_time
         """
-        median_params = []
-        
-        if hours:
-            cutoff = datetime.now() - timedelta(hours=hours)
-            cutoff_str = cutoff.strftime('%Y-%m-%d %H:%M:%S')
-            median_query += " AND timestamp >= ?"
-            median_params.append(cutoff_str)
-        elif days:
-            cutoff = datetime.now() - timedelta(days=days)
-            cutoff_str = cutoff.strftime('%Y-%m-%d %H:%M:%S')
-            median_query += " AND timestamp >= ?"
-            median_params.append(cutoff_str)
-        
-        if url:
-            median_query += " AND url = ?"
-            median_params.append(url)
-        
-        median_query += " ORDER BY response_time"
-        
-        cursor.execute(median_query, median_params)
-        response_times = [row[0] for row in cursor.fetchall()]
+        cursor.execute(median_query, params)
+        response_times = [row[0] for row in cursor.fetchall() if row and row[0] is not None]
         
         close_connection(conn)
         
@@ -359,12 +384,12 @@ def get_performance_stats(hours=None, days=None, url=None):
                 median = response_times[n//2]
         
         return {
-            'total_checks': result[0] or 0,
-            'successful_checks': result[1] or 0,
-            'failed_checks': result[2] or 0,
-            'avg_response_time': round(result[3], 3) if result[3] else 0.0,
-            'min_response_time': round(result[4], 3) if result[4] else 0.0,
-            'max_response_time': round(result[5], 3) if result[5] else 0.0,
+            'total_checks': total_checks,
+            'successful_checks': successful_checks,
+            'failed_checks': failed_checks,
+            'avg_response_time': round(avg, 3),
+            'min_response_time': round(min_time, 3),
+            'max_response_time': round(max_time, 3),
             'median_response_time': round(median, 3)
         }
         
@@ -381,7 +406,21 @@ def get_performance_stats(hours=None, days=None, url=None):
             'max_response_time': 0.0,
             'median_response_time': 0.0
         }
-
+        
+    except Exception as e:
+        print(f"❌ Error getting performance stats: {e}")
+        if conn:
+            close_connection(conn)
+        return {
+            'total_checks': 0,
+            'successful_checks': 0,
+            'failed_checks': 0,
+            'avg_response_time': 0.0,
+            'min_response_time': 0.0,
+            'max_response_time': 0.0,
+            'median_response_time': 0.0
+        }
+        
 
 def get_complete_report(hours=24, url=None):
     """

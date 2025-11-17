@@ -25,8 +25,31 @@ def dashboard():
         # Get comprehensive report
         report = get_complete_report(hours=24)
         
+        # Ensure all values are valid numbers (not None)
+        if report and 'uptime' in report:
+            uptime = report['uptime']
+            uptime['overall'] = uptime.get('overall', 0.0) or 0.0
+            uptime['last_24h'] = uptime.get('last_24h', 0.0) or 0.0
+            uptime['last_7d'] = uptime.get('last_7d', 0.0) or 0.0
+            uptime['last_30d'] = uptime.get('last_30d', 0.0) or 0.0
+        
+        if report and 'performance' in report:
+            perf = report['performance']
+            perf['total_checks'] = perf.get('total_checks', 0) or 0
+            perf['successful_checks'] = perf.get('successful_checks', 0) or 0
+            perf['failed_checks'] = perf.get('failed_checks', 0) or 0
+            perf['avg_response_time'] = perf.get('avg_response_time', 0.0) or 0.0
+            perf['min_response_time'] = perf.get('min_response_time', 0.0) or 0.0
+            perf['max_response_time'] = perf.get('max_response_time', 0.0) or 0.0
+            perf['median_response_time'] = perf.get('median_response_time', 0.0) or 0.0
+        
         # Get recent checks for table
         recent_checks = get_recent_checks(limit=10)
+        
+        # Ensure response_time is never None in recent checks
+        for check in recent_checks:
+            if check.get('response_time') is None:
+                check['response_time'] = 0.0
         
         # Get flash messages from session
         check_result = session.pop('check_result', None)
@@ -43,7 +66,40 @@ def dashboard():
             error=error
         )
     except Exception as e:
-        return f"Error loading dashboard: {e}", 500
+        print(f"❌ Dashboard error: {e}")
+        import traceback
+        traceback.print_exc()
+        # Return safe default values to prevent crash
+        return render_template(
+            'index.html',
+            report={
+                'uptime': {
+                    'overall': 0.0,
+                    'last_24h': 0.0,
+                    'last_7d': 0.0,
+                    'last_30d': 0.0
+                },
+                'performance': {
+                    'total_checks': 0,
+                    'successful_checks': 0,
+                    'failed_checks': 0,
+                    'avg_response_time': 0.0,
+                    'min_response_time': 0.0,
+                    'max_response_time': 0.0,
+                    'median_response_time': 0.0
+                },
+                'outages': {
+                    'total_outages': 0,
+                    'periods': []
+                },
+                'report_generated': 'N/A',
+                'report_period_hours': 24
+            },
+            recent_checks=[],
+            check_result=None,
+            success_message=None,
+            error=None
+        )
 
 
 @app.route('/api/status')
