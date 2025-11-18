@@ -3,7 +3,7 @@
 
 # 🌐 Website Availability Monitor 🌐
 
-### Professional real-time monitoring with uptime tracking and beautiful dashboard
+### Professional real-time monitoring with uptime tracking and web dashboard
 
 [![Python](https://img.shields.io/badge/Python-3.8+-3776AB?style=flat&logo=python&logoColor=white)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-3.0+-000000?style=flat&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
@@ -17,7 +17,7 @@
 
 </div>
 
----
+
 ## 📑 Table of Contents
 
 ### Getting Started
@@ -85,59 +85,51 @@
 </td>
 </tr>
 </table>
----
 
 ## 📸 Screenshots
 
-Below are previews of the real-time monitoring dashboard and its features.
 
----
-
-## 📸 Screenshots
-
-Below are previews of the real-time monitoring dashboard and its features.
-
----
-
-### 🖥️ Full Dashboard View
-<img src="assets/Screenshot 2025-11-17%20at%2015.00.49.png" alt="Dashboard Overview" width="800">
+### Full Dashboard View
+<img src="https://raw.githubusercontent.com/GuezelS/web-availability-monitor/main/assets/Screenshot%202025-11-17%20at%2015.00.49.png" alt="Dashboard Overview" width="800">
 
 *Real-time monitoring dashboard with comprehensive statistics*
 
 ---
 
-### ⚡ Instant URL Check
-<img src="assets/Screenshot 2025-11-17%20at%2015.00.49.png" alt="Instant Check Form" width="800">
+### Instant URL Check
+<img src="https://raw.githubusercontent.com/GuezelS/web-availability-monitor/main/assets/Screenshot%202025-11-17%20at%2015.02.27.png" alt="Instant Check" width="800">
 
 *On-demand website availability testing*
 
 ---
 
-### 📈 Uptime Breakdown
-<img src="docs/images/uptime-breakdown.png" alt="Uptime Analytics" width="800">
+### Performance Metrics
+<img src="https://raw.githubusercontent.com/GuezelS/web-availability-monitor/main/assets/Screenshot%202025-11-17%20at%2015.02.14.png" alt="Uptime Analytics" width="800">
 
-*Time-period based uptime tracking (24h, 7d, 30d)*
-
----
-
-### 🚀 Performance Metrics
-<img src="docs/images/performance-metrics.png" alt="Performance Statistics" width="800">
-
-*Response time analysis with min, max, and median values*
+*Time-period based uptime tracking*
 
 ---
 
-### 📋 Recent Checks Table
-<img src="docs/images/recent-checks.png" alt="Check History" width="800">
+### Uptime Breakdown
+<img src="https://raw.githubusercontent.com/GuezelS/web-availability-monitor/main/assets/Screenshot%202025-11-17%20at%2015.02.20.png" alt="Performance Metrics" width="800">
 
-*Complete monitoring log with timestamps and status indicators*
+*Response time analysis*
 
 ---
 
-### 🟢 Active Status Bar
-<img src="docs/images/status-bar.png" alt="Status Bar" width="800">
+### Recent Checks Table
+<img src="https://raw.githubusercontent.com/GuezelS/web-availability-monitor/main/assets/Screenshot%202025-11-17%20at%2015.01.55.png" alt="Recent Checks" width="800">
 
-*Live monitoring status with auto-refresh countdown*
+*Complete monitoring log*
+
+---
+
+### Active Status Bar
+<img src="https://raw.githubusercontent.com/GuezelS/web-availability-monitor/main/assets/Screenshot%202025-11-17%20at%2015.02.51.png" alt="Status Bar" width="800">
+
+*Live monitoring status*
+
+
 
 ---
 
@@ -479,7 +471,7 @@ web-availability-monitor/
 
 ---
 
-## 🧪 Testing
+##  Testing
 
 Run integration tests:
 ```bash
@@ -494,7 +486,7 @@ Testing database integration...
 
 ---
 
-## 🤝 Contributing
+##  Contributing
 
 Contributions are welcome! Here's how you can help:
 
@@ -506,7 +498,7 @@ Contributions are welcome! Here's how you can help:
 
 ---
 
-## 📝 License
+##  License
 
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 ```
@@ -523,7 +515,7 @@ copies of the Software...
 
 ---
 
-## 👤 Author
+##  Author
 
 **Sevdenur Güzel** @ SAP
 
